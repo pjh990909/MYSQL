@@ -27,18 +27,18 @@ select salary
 from employees
 order by salary asc;
 
-select employee_id 직원번호,
-       first_name 이름,
-       salary 월급,
-       avg(salary) 평균월급,
-       max(salary) 최대월급
-from employees
-where salary >= (select avg(salary)
+select e.employee_id 직원번호,
+       e.first_name 이름,
+       e.salary 월급,
+       avg(m.salary) 평균월급,
+       max(m.salary) 최대월급
+from employees e,employees m
+where e.salary >= (select avg(salary)
                 from employees)
-and salary <= (select max(salary)
+and e.salary <= (select max(salary)
 			   from employees)
-group by employee_id
-order by salary asc;
+group by e.employee_id
+order by e.salary asc;
 
 /*문제3.
 직원중 Steven(first_name) king(last_name)이 소속된 부서(departments)가 있는 곳의 주소
@@ -47,10 +47,18 @@ order by salary asc;
 (state_province), 나라아이디(country_id) 를 출력하세요
 (1건)
 */
-select *
+select location_id,
+	   street_address,
+       postal_code,
+       city,
+       state_province,
+       country_id
 from locations
-where location_id;
-
+where location_id in (select d.location_id
+                      from employees e,departments d
+                      where d.department_id = e.department_id
+                      and e.first_name = 'Steven'
+                      and e.last_name = 'king');
 
 /*문제4.
 job_id 가 'ST_MAN' 인 직원의 월급보다 작은 직원의 사번,이름,월급을 월급의 내림차순으로
@@ -98,9 +106,41 @@ and e.salary = d.maxsalary;
 월급 총합이 가장 높은 업무부터 업무명(job_title)과 월급 총합을 조회하시오
 (19건)
 */
-select job_title
-       salary
-from jobs
-where (job_title,salary) in (select job_title,sum(salary)
-                            from employees
-                            group by job_title)
+select j.job_title 업무명,
+       e.sumsalary 월급총합
+from jobs j,(select job_id,sum(salary) sumsalary
+             from employees
+             group by job_id) e
+where j.job_id = e.job_id;
+
+/*문제7.자신의 부서 평균 월급보다 월급(salary)이 많은 직원의 직원번호(employee_id), 이름
+(first_name)과 월급(salary)을 조회하세요
+(38건)
+*/
+select e.employee_id,
+       e.first_name,
+       e.salary
+from employees e,(select avg(salary) avgsalary,department_id
+                  from employees
+                  group by department_id) m
+where e.department_id = m.department_id
+and e.salary > m.avgsalary;
+
+/*문제8.
+직원 입사일이 11번째에서 15번째의 직원의 사번, 이름, 월급, 입사일을 입사일 순서로 출력
+하세요
+*/
+select employee_id,
+	   first_name,
+       salary,
+       hire_date
+from employees
+order by hire_date asc
+limit 10,5 ;
+
+select employee_id,
+	   first_name,
+       salary,
+       hire_date
+from employees
+order by hire_date asc;
